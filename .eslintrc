@@ -1,0 +1,46 @@
+{
+  "extends": ["airbnb", "prettier"],
+  "plugins": ["prettier"],
+  "parserOptions": { "ecmaVersion": 6 },
+  "rules": {
+    "prettier/prettier": "error",
+    "max-len": ["error", 120],
+    "import/prefer-default-export": "off",
+    "default-case": "warn",
+    "no-underscore-dangle": ["error", { "allowAfterThis": true }],
+    "no-unused-expressions": ["error", { "allowTernary": true, "allowShortCircuit": true }],
+    "prefer-object-spread": false,
+    "camelcase": [
+      "error",
+      {
+        "allow": ["sound_icon", "ad_hide_header", "ad_begin", "ad_state", "ad_exchange", "cta_btn_persistent_text"]
+      }
+    ]
+  },
+  "env": {
+    "browser": true
+  },
+  "globals": {
+    "Phaser": true,
+    "CI_API": true,
+    "embedded": true,
+    "LP": true,
+    "localization": true,
+    "analytics": true,
+    "wrapper_mark_interaction": true,
+    "wrapper_hide_splash": true,
+    "wrapper_mark_cta": true,
+    "wrapper_load_progress": true,
+    "wrapper_preload_complete": true,
+    "wrapper_click_go": true,
+    "imageLoader": true,
+    "ad_state": true,
+    "soundLoader": true,
+    "ad_exchange": true,
+    "sound_icon": true,
+    "ad_hide_header": true,
+    "utils": true,
+    "PIXI": true,
+    "xp": true
+  }
+}
