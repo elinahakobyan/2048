@@ -21,7 +21,7 @@ export class Cell extends Phaser.Sprite {
     get item() {
         return this._item
     }
-    get isEmpty() {
+    isEmpty() {
         return !this._item;
     }
 
@@ -32,13 +32,14 @@ export class Cell extends Phaser.Sprite {
     removeItem() {
         const item = this._item;
         this._item = null;
+        return item;
 
     }
 
     _build() {
         const gr = this.game.add.graphics(0, 0);
-        gr.beginFill(0xf7d6c9);
-        gr.drawRect(-25, -25, 100, 100);
+        gr.beginFill(0xf2f6f9);
+        gr.drawRect(-50, -50, 100, 100);
         gr.endFill();
         this.addChild(gr);
     }
