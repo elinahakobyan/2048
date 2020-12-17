@@ -12,29 +12,16 @@ export class Board extends Phaser.Sprite {
         this._endX
         this._endY
         this._build();
-        this.time = 100;
         window.addEventListener('keydown', this._onKeyDown.bind(this))
         this._generateNewItemsSet(INITIAL_ITEM_COUNT, 2);
         // this._generateFixedItems();
 
-        // this._testTween();
-
         this.moved = false;
-    }
-
-    _testTween() {
-        const cell = new Cell(this.game, 100, 100);
-
-        this.addChild(cell);
-
-        this.game.add.tween(cell)
-            .to({ x: 500, }, 100, Phaser.Easing.Cubic.InOut, true)
-            .onComplete.add(() => console.warn('complete'))
     }
 
     getEmptyCells() {
         const cells = this.getCellsArray();
-        return cells.filter((cell) => cell.isEmpty());
+        return cells.filter((cell) => cell.isEmpty);
     }
 
     getCellsArray() {
@@ -128,21 +115,21 @@ export class Board extends Phaser.Sprite {
         if (Math.abs(defX) > Math.abs(defY) && this._startX < this._endX) {
             this.moved = false
             this._moveRigth()
-            // this._newItems(this.moved);
+            this._newItems(this.moved);
         } else if (Math.abs(defX) > Math.abs(defY) && this._startX > this._endX) {
             this.moved = false
             this._moveLeft()
-            // this._newItems(this.moved);
+            this._newItems(this.moved);
 
         } else if (Math.abs(defX) < Math.abs(defY) && this._startY > this._endY) {
             this.moved = false
             this._moveUp();
-            // this._newItems(this.moved);
+            this._newItems(this.moved);
 
         } else if (Math.abs(defX) < Math.abs(defY) && this._startY < this._endY) {
             this.moved = false
             this._moveDown();
-            // this._newItems(this.moved);
+            this._newItems(this.moved);
 
         }
 
@@ -180,7 +167,7 @@ export class Board extends Phaser.Sprite {
     _moveUp() {
         for (let i = 0; i < this._cells.length; i++) {
             for (let j = 0; j < this._cells.length; j++) {
-                if (!this._cells[i][j].isEmpty()) {
+                if (!this._cells[i][j].isEmpty) {
                     this._moveToTop(i, j)
                 }
 
@@ -191,7 +178,7 @@ export class Board extends Phaser.Sprite {
     _moveDown() {
         for (let i = 3; i >= 0; i--) {
             for (let j = 0; j < this._cells.length; j++) {
-                if (!this._cells[i][j].isEmpty()) {
+                if (!this._cells[i][j].isEmpty) {
                     this._moveToDown(i, j)
                 }
 
@@ -202,7 +189,7 @@ export class Board extends Phaser.Sprite {
     _moveRigth() {
         for (let i = 0; i < this._cells.length; i++) {
             for (let j = 3; j >= 0; j--) {
-                if (!this._cells[i][j].isEmpty()) {
+                if (!this._cells[i][j].isEmpty) {
                     this._moveToRigth(i, j)
                 }
             }
@@ -212,7 +199,7 @@ export class Board extends Phaser.Sprite {
     _moveLeft() {
         for (let i = 3; i >= 0; i--) {
             for (let j = 0; j < this._cells.length; j++) {
-                if (!this._cells[i][j].isEmpty()) {
+                if (!this._cells[i][j].isEmpty) {
                     this._moveToLeft(i, j)
                 }
             }
@@ -222,17 +209,15 @@ export class Board extends Phaser.Sprite {
     _moveToRigth(i, j) {
         const cells = this._cells
         if (cells[i][j + 1]) {
-            if (cells[i][j + 1].isEmpty()) {
+            if (cells[i][j + 1].isEmpty) {
                 this.moved = true;
                 const item = cells[i][j].removeItem()
                 this.removeChild(item)
                 j++
                 cells[i][j].addItem(item)
                 this.addChild(item)
-                this.game.add.tween(item).
-                    to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
-
                 item.setCord(cells[i][j].row, cells[i][j].col)
+                item.position.set(cells[i][j].x, cells[i][j].y)
                 this._moveToRigth(i, j)
 
 
@@ -256,16 +241,16 @@ export class Board extends Phaser.Sprite {
         const cells = this._cells
         if (cells[j - 1]) {
             if (cells[i][j - 1]) {
-                if (cells[i][j - 1].isEmpty()) {
+                if (cells[i][j - 1].isEmpty) {
                     this.moved = true;
                     const item = cells[i][j].removeItem()
                     this.removeChild(item)
                     j--
                     cells[i][j].addItem(item)
                     this.addChild(item)
-                    this.game.add.tween(item).
-                        to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
+
                     item.setCord(cells[i][j].row, cells[i][j].col)
+                    item.position.set(cells[i][j].x, cells[i][j].y)
                     this._moveToLeft(i, j)
                 }
                 else {
@@ -290,7 +275,7 @@ export class Board extends Phaser.Sprite {
         const cells = this._cells
         if (cells[i - 1]) {
             if (cells[i - 1][j]) {
-                if (cells[i - 1][j].isEmpty()) {
+                if (cells[i - 1][j].isEmpty) {
                     this.moved = true
                     const item = cells[i][j].removeItem()
                     this.removeChild(item)
@@ -298,9 +283,9 @@ export class Board extends Phaser.Sprite {
                     cells[i][j].addItem(item)
                     this.addChild(item)
                     this.game.add.tween(item).
-                        to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
+                        to({ x: cells[i][j].x, y: cells[i][j].y }, 1000, Phaser.Easing.Circular.Out, true)
                     item.setCord(cells[i][j].row, cells[i][j].col)
-
+                    // item.position.set(cells[i][j].x, cells[i][j].y)
                     this._moveToTop(i, j)
                 }
                 else {
@@ -325,7 +310,7 @@ export class Board extends Phaser.Sprite {
         const cells = this._cells
         if (cells[i + 1]) {
             if (cells[i + 1][j]) {
-                if (cells[i + 1][j].isEmpty()) {
+                if (cells[i + 1][j].isEmpty) {
                     this.moved = true
                     const item = cells[i][j].removeItem()
                     this.removeChild(item)
@@ -333,9 +318,9 @@ export class Board extends Phaser.Sprite {
                     cells[i][j].addItem(item)
                     this.addChild(item)
                     this.game.add.tween(item).
-                        to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
-
+                        to({ x: cells[i][j].x, y: cells[i][j].y }, 1000, Phaser.Easing.Circular.Out, true)
                     item.setCord(cells[i][j].row, cells[i][j].col)
+                    // item.position.set(cells[i][j].x, cells[i][j].y)
                     this._moveToDown(i, j)
                 }
                 else {
@@ -360,8 +345,6 @@ export class Board extends Phaser.Sprite {
         newItem.position.set(item.x, item.y)
         item.addItem(newItem)
         this.addChild(newItem)
-        // this.game.add.tween(item).
-        //     to({ x: item.x, y: item.y },this.time, Phaser.Easing.Cubic.Out, true,)
     }
 
     _randomNumbers() {

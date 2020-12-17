@@ -18,10 +18,12 @@ export class Cell extends Phaser.Sprite {
     get col() {
         return this._col;
     }
+
     get item() {
         return this._item
     }
-    isEmpty() {
+
+    get isEmpty() {
         return !this._item;
     }
 
@@ -33,7 +35,6 @@ export class Cell extends Phaser.Sprite {
         const item = this._item;
         this._item = null;
         return item;
-
     }
 
     _build() {
