@@ -13,7 +13,7 @@ function preload() { }
 
 function create() {
     const board = new Board(game);
-    game.stage.backgroundColor = 0xf5d0ff
+    game.stage.backgroundColor = 0xbdcfdd
     game.stage.add(board);
 
 }

@@ -12,8 +12,24 @@ export class Board extends Phaser.Sprite {
         this._endX
         this._endY
         this._build();
+        this.time = 100;
+        window.addEventListener('keydown', this._onKeyDown.bind(this))
         this._generateNewItemsSet(INITIAL_ITEM_COUNT, 2);
+        // this._generateFixedItems();
+
+        // this._testTween();
+
         this.moved = false;
+    }
+
+    _testTween() {
+        const cell = new Cell(this.game, 100, 100);
+
+        this.addChild(cell);
+
+        this.game.add.tween(cell)
+            .to({ x: 500, }, 100, Phaser.Easing.Cubic.InOut, true)
+            .onComplete.add(() => console.warn('complete'))
     }
 
     getEmptyCells() {
@@ -43,7 +59,7 @@ export class Board extends Phaser.Sprite {
             for (let j = 0; j < 4; j++) {
                 const cell = new Cell(this.game, i, j);
 
-                cell.position.set((j + 1) * (100 + gap), (i + 1) * (100 + gap));
+                cell.position.set((j + 1) * (90 + gap), (i + 1) * (90 + gap));
                 this.addChild(cell);
                 row.push(cell);
             }
@@ -61,9 +77,24 @@ export class Board extends Phaser.Sprite {
             items[i].y = cell.y
             items[i].setCord(cell.row, cell.col)
             this.addChild(items[i])
-
-
         });
+    }
+
+    _generateFixedItems() {
+        //     const items = this._generateNewItems(1, 4)
+        //     items.push(...this._generateNewItems(2, 2))
+        //     const emptyCells = [
+        //         this._cells[1][0],
+        //         this._cells[2][0],
+        //         this._cells[3][0],
+        //     ]
+        //     emptyCells.forEach((cell, i) => {
+        //         cell.addItem(items[i])
+        //         items[i].x = cell.x
+        //         items[i].y = cell.y
+        //         items[i].setCord(cell.row, cell.col)
+        //         this.addChild(items[i])
+        //     });
     }
 
     _generateNewItems(count, type) {
@@ -81,6 +112,7 @@ export class Board extends Phaser.Sprite {
         state.input.onDown.add(this._onPointerDown, this);
 
         state.input.onUp.add(this._onPointerUp, this);
+
     }
 
     _onPointerDown(pointer) {
@@ -96,24 +128,52 @@ export class Board extends Phaser.Sprite {
         if (Math.abs(defX) > Math.abs(defY) && this._startX < this._endX) {
             this.moved = false
             this._moveRigth()
-            this._newItems(this.moved);
+            // this._newItems(this.moved);
         } else if (Math.abs(defX) > Math.abs(defY) && this._startX > this._endX) {
             this.moved = false
             this._moveLeft()
-            this._newItems(this.moved);
+            // this._newItems(this.moved);
 
         } else if (Math.abs(defX) < Math.abs(defY) && this._startY > this._endY) {
             this.moved = false
             this._moveUp();
-            this._newItems(this.moved);
+            // this._newItems(this.moved);
 
         } else if (Math.abs(defX) < Math.abs(defY) && this._startY < this._endY) {
             this.moved = false
             this._moveDown();
-            this._newItems(this.moved);
+            // this._newItems(this.moved);
 
         }
 
+
+    }
+
+    _onKeyDown(event) {
+        if (event.key === 'ArrowUp') {
+            this.moved = false
+            this._moveUp()
+            this._newItems(this.moved);
+
+        }
+        if (event.key === 'ArrowDown') {
+            this.moved = false
+            this._moveDown()
+            this._newItems(this.moved);
+
+        }
+        if (event.key === 'ArrowLeft') {
+            this.moved = false
+            this._moveLeft()
+            this._newItems(this.moved);
+
+        }
+        if (event.key === 'ArrowRight') {
+            this.moved = false
+            this._moveRigth()
+            this._newItems(this.moved);
+
+        }
 
     }
 
@@ -169,14 +229,16 @@ export class Board extends Phaser.Sprite {
                 j++
                 cells[i][j].addItem(item)
                 this.addChild(item)
+                this.game.add.tween(item).
+                    to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
+
                 item.setCord(cells[i][j].row, cells[i][j].col)
-                item.position.set(cells[i][j].x, cells[i][j].y)
                 this._moveToRigth(i, j)
 
 
             } else {
                 if (cells[i][j].item.type === cells[i][j + 1].item.type) {
-
+                    this.moved = true;
                     const newType = cells[i][j].item.type * 2
                     const item = cells[i][j].removeItem()
                     this.removeChild(item)
@@ -201,12 +263,14 @@ export class Board extends Phaser.Sprite {
                     j--
                     cells[i][j].addItem(item)
                     this.addChild(item)
+                    this.game.add.tween(item).
+                        to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
                     item.setCord(cells[i][j].row, cells[i][j].col)
-                    item.position.set(cells[i][j].x, cells[i][j].y)
                     this._moveToLeft(i, j)
                 }
                 else {
                     if (cells[i][j].item.type === cells[i][j - 1].item.type) {
+                        this.moved = true
                         const newType = cells[i][j].item.type * 2
                         const item = cells[i][j].removeItem()
                         this.removeChild(item)
@@ -233,12 +297,15 @@ export class Board extends Phaser.Sprite {
                     i--
                     cells[i][j].addItem(item)
                     this.addChild(item)
+                    this.game.add.tween(item).
+                        to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
                     item.setCord(cells[i][j].row, cells[i][j].col)
-                    item.position.set(cells[i][j].x, cells[i][j].y)
+
                     this._moveToTop(i, j)
                 }
                 else {
                     if (cells[i][j].item.type === cells[i - 1][j].item.type) {
+                        this.moved = true
                         const newType = cells[i - 1][j].item.type * 2
                         const item = cells[i][j].removeItem()
                         this.removeChild(item)
@@ -265,12 +332,15 @@ export class Board extends Phaser.Sprite {
                     i++
                     cells[i][j].addItem(item)
                     this.addChild(item)
+                    this.game.add.tween(item).
+                        to({ x: cells[i][j].x, y: cells[i][j].y }, this.time, Phaser.Easing.Cubic.Out, true)
+
                     item.setCord(cells[i][j].row, cells[i][j].col)
-                    item.position.set(cells[i][j].x, cells[i][j].y)
                     this._moveToDown(i, j)
                 }
                 else {
                     if (cells[i][j].item.type === cells[i + 1][j].item.type) {
+                        this.moved = true
                         const newType = cells[i][j].item.type * 2
                         const item = cells[i][j].removeItem()
                         this.removeChild(item)
@@ -290,11 +360,39 @@ export class Board extends Phaser.Sprite {
         newItem.position.set(item.x, item.y)
         item.addItem(newItem)
         this.addChild(newItem)
+        // this.game.add.tween(item).
+        //     to({ x: item.x, y: item.y },this.time, Phaser.Easing.Cubic.Out, true,)
+    }
+
+    _randomNumbers() {
+        const index = Math.random()
+        if (index < 0.8) {
+            return 2;
+        } else {
+            return 4;
+        }
+
     }
 
     _newItems(check) {
         if (check) {
-            this._generateNewItemsSet(1, 2)
+            this._generateNewItemsSet(1, this._randomNumbers())
+        }
+    }
+
+    _gameFinish() {
+        let count = 0
+        const cells = this._cells
+        for (let i = 0; i < cells.length; i++) {
+            for (let j = 0; j < cells.length; j++) {
+                if (!this._cells[i][j].isEmpty) {
+                    count++
+                    if (count === (cells.length * cells.length) && !this.moved) {
+                        console.warn('Game Over');
+                    }
+
+                }
+            }
         }
     }
 

@@ -39,7 +39,7 @@ export class Item extends Phaser.Sprite {
     _buildBg() {
         const gr = this.game.add.graphics(0, 0);
         gr.beginFill((this.colors[this._type]));
-        gr.drawRect(-50, -50, 100, 100);
+        gr.drawRoundedRect(-45, -45, 90, 90);
         gr.endFill();
         this.addChild((this._bg = gr));
     }
