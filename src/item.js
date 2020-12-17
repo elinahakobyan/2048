@@ -1,10 +1,8 @@
 import { Colors, ITEM_COLORS, ITEM_TYPES } from "./constants";
 import { sample } from "./utils";
 export class Item extends Phaser.Sprite {
-    constructor(game, row, col, type) {
+    constructor(game, type) {
         super(game);
-        this._row = row;
-        this._col = col;
         this._type = type;
 
         this._build();
@@ -13,17 +11,6 @@ export class Item extends Phaser.Sprite {
 
     get type() {
         return this._type;
-    }
-
-    get row() {
-        return this._row
-    }
-    get col() {
-        return this._col
-    }
-    setCord(row, col) {
-        this._row = row;
-        this._col = col;
     }
 
     _build() {

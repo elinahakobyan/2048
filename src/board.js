@@ -10,11 +10,11 @@ export class Board extends Phaser.Sprite {
         this._startX
         this._startY
         this._endX
-        this._endY
+        this._endY;
+        this._isMoving = false;
         this._build();
         window.addEventListener('keydown', this._onKeyDown.bind(this))
         this._generateNewItemsSet(INITIAL_ITEM_COUNT, 2);
-        // this._generateFixedItems();
 
         this.moved = false;
     }
@@ -56,40 +56,24 @@ export class Board extends Phaser.Sprite {
     }
 
     _generateNewItemsSet(count, type) {
-        const items = this._generateNewItems(count, type)
+        const items = this._makeNewItems(count, type)
         const emptyCells = sampleSize(this.getEmptyCells(), count);
         emptyCells.forEach((cell, i) => {
             cell.addItem(items[i])
             items[i].x = cell.x
             items[i].y = cell.y
-            items[i].setCord(cell.row, cell.col)
-            this.addChild(items[i])
+            this.addChild(items[i]);
+            this.game.add.tween(items[i].scale).from({ x: 0.1, y: 0.1 }, 200, Phaser.Easing.Sinusoidal.InOut, true)
         });
     }
 
-    _generateFixedItems() {
-        //     const items = this._generateNewItems(1, 4)
-        //     items.push(...this._generateNewItems(2, 2))
-        //     const emptyCells = [
-        //         this._cells[1][0],
-        //         this._cells[2][0],
-        //         this._cells[3][0],
-        //     ]
-        //     emptyCells.forEach((cell, i) => {
-        //         cell.addItem(items[i])
-        //         items[i].x = cell.x
-        //         items[i].y = cell.y
-        //         items[i].setCord(cell.row, cell.col)
-        //         this.addChild(items[i])
-        //     });
-    }
-
-    _generateNewItems(count, type) {
+    _makeNewItems(count, type) {
         const items = [];
         for (let i = 0; i < count; i++) {
-            const item = new Item(this.game, null, null, type)
+            const item = new Item(this.game, type)
             items.push(item)
         }
+
         return items;
     }
 
@@ -115,21 +99,17 @@ export class Board extends Phaser.Sprite {
         if (Math.abs(defX) > Math.abs(defY) && this._startX < this._endX) {
             this.moved = false
             this._moveRigth()
-            this._newItems(this.moved);
         } else if (Math.abs(defX) > Math.abs(defY) && this._startX > this._endX) {
             this.moved = false
             this._moveLeft()
-            this._newItems(this.moved);
 
         } else if (Math.abs(defX) < Math.abs(defY) && this._startY > this._endY) {
             this.moved = false
             this._moveUp();
-            this._newItems(this.moved);
 
         } else if (Math.abs(defX) < Math.abs(defY) && this._startY < this._endY) {
             this.moved = false
             this._moveDown();
-            this._newItems(this.moved);
 
         }
 
@@ -137,32 +117,163 @@ export class Board extends Phaser.Sprite {
     }
 
     _onKeyDown(event) {
-        if (event.key === 'ArrowUp') {
-            this.moved = false
-            this._moveUp()
-            this._newItems(this.moved);
+        if (!this._isMoving) {
+            switch (event.key) {
+                case 'ArrowUp':
+                    this.moved = false;
+                    this._moveUp();
+                    this._updateItemsPosition().onComplete.add(() => {
+                        this._checkMatchUp().then(() => {
+                            this._moveUp();
+                            this._updateItemsPosition().onComplete.add(() => {
+                                this._isMoving = false;
+                                this._generateNewItemsSet(1, 2)
+                            })
+                        })
+                    })
 
+                    break;
+                case 'ArrowDown':
+                    this.moved = false
+                    this._moveDown()
+                    this._updateItemsPosition().onComplete.add(() => {
+                        this._checkMatchDown();
+                        this._moveDown()
+                        this._updateItemsPosition().onComplete.add(() => {
+                            this._isMoving = false;
+                            this._generateNewItemsSet(1, 2)
+                        })
+                    })
+
+                    break;
+                case 'ArrowLeft':
+                    this.moved = false
+                    this._moveLeft()
+                    this._updateItemsPosition().onComplete.add(() => {
+                        this._checkMatchLeft();
+                        this._moveLeft()
+                        this._updateItemsPosition().onComplete.add(() => {
+                            this._isMoving = false;
+                            this._generateNewItemsSet(1, 2)
+                        })
+                    })
+
+                    break;
+                case 'ArrowRight':
+                    this.moved = false
+                    this._moveRigth()
+                    this._updateItemsPosition().onComplete.add(() => {
+                        this._checkMatchRigth();
+                        this._moveRigth();
+                        this._updateItemsPosition().onComplete.add(() => {
+                            this._isMoving = false;
+                            this._generateNewItemsSet(1, 2)
+                        })
+                    })
+
+                    break;
+
+                default:
+                    break;
+            }
         }
-        if (event.key === 'ArrowDown') {
-            this.moved = false
-            this._moveDown()
-            this._newItems(this.moved);
+    }
 
-        }
-        if (event.key === 'ArrowLeft') {
-            this.moved = false
-            this._moveLeft()
-            this._newItems(this.moved);
+    _checkMatchUp() {
+        return new Promise(resolve => {
+            const cells = this._cells
+            for (let i = 0; i < this._cells.length; i++) {
+                for (let j = 0; j < this._cells.length; j++) {
+                    if (!cells[i][j].isEmpty) {
+                        if (cells[i + 1] && cells[i + 1][j] && !cells[i + 1][j].isEmpty) {
+                            if (cells[i][j].item.type === cells[i + 1][j].item.type) {
+                                this.moved = true
 
-        }
-        if (event.key === 'ArrowRight') {
-            this.moved = false
-            this._moveRigth()
-            this._newItems(this.moved);
+                                this.game.add.tween(cells[i + 1][j].item).to({ x: cells[i][j].x, y: cells[i][j].y }, 300, null, true).onComplete.add(() => {
+                                    const newType = cells[i + 1][j].item.type * 2
+                                    cells[i][j].item.destroy();
+                                    cells[i + 1][j].item.destroy();
+                                    cells[i][j].removeItem();
+                                    cells[i + 1][j].removeItem();
+                                    this._updateItems(cells[i][j], newType)
+                                    resolve();
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
 
+    _checkMatchDown() {
+        const cells = this._cells
+        for (let i = this._cells.length - 1; i >= 0; i--) {
+            for (let j = 0; j < this._cells.length; j++) {
+                if (!cells[i][j].isEmpty) {
+                    if (cells[i - 1] && cells[i - 1][j] && !cells[i - 1][j].isEmpty) {
+                        if (cells[i][j].item.type === cells[i - 1][j].item.type) {
+                            this.moved = true
+                            const newType = cells[i - 1][j].item.type * 2
+                            cells[i][j].item.destroy();
+                            cells[i - 1][j].item.destroy();
+                            cells[i][j].removeItem();
+                            cells[i - 1][j].removeItem();
+                            this._updateItems(cells[i][j], newType)
+                        }
+
+                    }
+
+                }
+            }
         }
 
     }
+
+    _checkMatchLeft() {
+        const cells = this._cells
+        for (let i = 0; i < this._cells.length; i++) {
+            for (let j = 0; j < this._cells.length; j++) {
+                if (!this._cells[i][j].isEmpty) {
+                    if (cells[i][j + 1] && !cells[i][j + 1].isEmpty) {
+                        if (cells[i][j].item.type === cells[i][j + 1].item.type) {
+                            this.moved = true
+                            const newType = cells[i][j + 1].item.type * 2
+                            cells[i][j].item.destroy();
+                            cells[i][j + 1].item.destroy();
+                            cells[i][j].removeItem();
+                            cells[i][j + 1].removeItem();
+                            this._updateItems(cells[i][j], newType)
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
+    _checkMatchRigth() {
+        const cells = this._cells
+        for (let i = 0; i < this._cells.length; i++) {
+            for (let j = this._cells[i].length - 1; j >= 0; j--) {
+                if (!this._cells[i][j].isEmpty) {
+                    if (cells[i][j - 1] && !cells[i][j - 1].isEmpty) {
+                        if (cells[i][j].item.type === cells[i][j - 1].item.type) {
+                            this.moved = true
+                            const newType = cells[i][j - 1].item.type * 2
+                            cells[i][j].item.destroy();
+                            cells[i][j - 1].item.destroy();
+                            cells[i][j].removeItem();
+                            cells[i][j - 1].removeItem();
+                            this._updateItems(cells[i][j], newType)
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+
 
     _moveUp() {
         for (let i = 0; i < this._cells.length; i++) {
@@ -176,7 +287,7 @@ export class Board extends Phaser.Sprite {
     }
 
     _moveDown() {
-        for (let i = 3; i >= 0; i--) {
+        for (let i = this._cells.length - 1; i >= 0; i--) {
             for (let j = 0; j < this._cells.length; j++) {
                 if (!this._cells[i][j].isEmpty) {
                     this._moveToDown(i, j)
@@ -188,7 +299,7 @@ export class Board extends Phaser.Sprite {
 
     _moveRigth() {
         for (let i = 0; i < this._cells.length; i++) {
-            for (let j = 3; j >= 0; j--) {
+            for (let j = this._cells[i].length - 1; j >= 0; j--) {
                 if (!this._cells[i][j].isEmpty) {
                     this._moveToRigth(i, j)
                 }
@@ -197,7 +308,7 @@ export class Board extends Phaser.Sprite {
     }
 
     _moveLeft() {
-        for (let i = 3; i >= 0; i--) {
+        for (let i = 0; i < this._cells.length; i++) {
             for (let j = 0; j < this._cells.length; j++) {
                 if (!this._cells[i][j].isEmpty) {
                     this._moveToLeft(i, j)
@@ -208,176 +319,134 @@ export class Board extends Phaser.Sprite {
 
     _moveToRigth(i, j) {
         const cells = this._cells
-        if (cells[i][j + 1]) {
-            if (cells[i][j + 1].isEmpty) {
-                this.moved = true;
-                const item = cells[i][j].removeItem()
-                this.removeChild(item)
-                j++
-                cells[i][j].addItem(item)
-                this.addChild(item)
-                item.setCord(cells[i][j].row, cells[i][j].col)
-                item.position.set(cells[i][j].x, cells[i][j].y)
-                this._moveToRigth(i, j)
-
-
-            } else {
-                if (cells[i][j].item.type === cells[i][j + 1].item.type) {
-                    this.moved = true;
-                    const newType = cells[i][j].item.type * 2
-                    const item = cells[i][j].removeItem()
-                    this.removeChild(item)
-                    const item_2 = cells[i][j + 1].removeItem()
-                    this.removeChild(item_2)
-                    const lastItem = cells[i][j + 1]
-                    this._updateItems(lastItem, newType)
-                }
-
-            }
+        if (cells[i][j + 1] && cells[i][j + 1].isEmpty) {
+            this.moved = true;
+            const item = cells[i][j].removeItem()
+            cells[i][j + 1].addItem(item)
+            this._moveToRigth(i, j + 1)
         }
     }
 
     _moveToLeft(i, j) {
         const cells = this._cells
-        if (cells[j - 1]) {
-            if (cells[i][j - 1]) {
-                if (cells[i][j - 1].isEmpty) {
-                    this.moved = true;
-                    const item = cells[i][j].removeItem()
-                    this.removeChild(item)
-                    j--
-                    cells[i][j].addItem(item)
-                    this.addChild(item)
-
-                    item.setCord(cells[i][j].row, cells[i][j].col)
-                    item.position.set(cells[i][j].x, cells[i][j].y)
-                    this._moveToLeft(i, j)
-                }
-                else {
-                    if (cells[i][j].item.type === cells[i][j - 1].item.type) {
-                        this.moved = true
-                        const newType = cells[i][j].item.type * 2
-                        const item = cells[i][j].removeItem()
-                        this.removeChild(item)
-                        const item_2 = cells[i][j - 1].removeItem()
-                        this.removeChild(item_2)
-                        const lastItem = cells[i][j - 1]
-                        this._updateItems(lastItem, newType)
-                    }
-                }
-            }
-
+        if (cells[i][j - 1] && cells[i][j - 1].isEmpty) {
+            this.moved = true;
+            const item = cells[i][j].removeItem()
+            cells[i][j - 1].addItem(item)
+            this._moveToLeft(i, j - 1)
         }
-
     }
 
     _moveToTop(i, j) {
-        const cells = this._cells
-        if (cells[i - 1]) {
-            if (cells[i - 1][j]) {
-                if (cells[i - 1][j].isEmpty) {
-                    this.moved = true
-                    const item = cells[i][j].removeItem()
-                    this.removeChild(item)
-                    i--
-                    cells[i][j].addItem(item)
-                    this.addChild(item)
-                    this.game.add.tween(item).
-                        to({ x: cells[i][j].x, y: cells[i][j].y }, 1000, Phaser.Easing.Circular.Out, true)
-                    item.setCord(cells[i][j].row, cells[i][j].col)
-                    // item.position.set(cells[i][j].x, cells[i][j].y)
-                    this._moveToTop(i, j)
-                }
-                else {
-                    if (cells[i][j].item.type === cells[i - 1][j].item.type) {
-                        this.moved = true
-                        const newType = cells[i - 1][j].item.type * 2
-                        const item = cells[i][j].removeItem()
-                        this.removeChild(item)
-                        const item_2 = cells[i - 1][j].removeItem()
-                        const lastItem = cells[i - 1][j]
-                        this.removeChild(item_2)
-                        this._updateItems(lastItem, newType)
-                    }
-                }
-            }
-
+        const cells = this._cells;
+        if (cells[i - 1] && cells[i - 1][j].isEmpty) {
+            this.moved = true;
+            const item = cells[i][j].removeItem();
+            cells[i - 1][j].addItem(item);
+            this._moveToTop(i - 1, j)
         }
-
     }
 
     _moveToDown(i, j) {
         const cells = this._cells
-        if (cells[i + 1]) {
-            if (cells[i + 1][j]) {
-                if (cells[i + 1][j].isEmpty) {
-                    this.moved = true
-                    const item = cells[i][j].removeItem()
-                    this.removeChild(item)
-                    i++
-                    cells[i][j].addItem(item)
-                    this.addChild(item)
-                    this.game.add.tween(item).
-                        to({ x: cells[i][j].x, y: cells[i][j].y }, 1000, Phaser.Easing.Circular.Out, true)
-                    item.setCord(cells[i][j].row, cells[i][j].col)
-                    // item.position.set(cells[i][j].x, cells[i][j].y)
-                    this._moveToDown(i, j)
+        if (cells[i + 1] && cells[i + 1][j].isEmpty) {
+            this.moved = true
+            const item = cells[i][j].removeItem()
+            cells[i + 1][j].addItem(item)
+            this._moveToDown(i + 1, j)
+        }
+    }
+
+    _updateItemsPosition() {
+        let lastTween;
+        this._cells.forEach(row => {
+            row.forEach(cell => {
+                const { item, isEmpty, x, y } = cell;
+
+                if (!isEmpty) {
+                    this._isMoving = true;
+                    lastTween = this.game.add.tween(item).to({ x, y }, 300, Phaser.Easing.Cubic.InOut, true)
                 }
-                else {
-                    if (cells[i][j].item.type === cells[i + 1][j].item.type) {
-                        this.moved = true
-                        const newType = cells[i][j].item.type * 2
-                        const item = cells[i][j].removeItem()
-                        this.removeChild(item)
-                        const item_2 = cells[i + 1][j].removeItem()
-                        this.removeChild(item_2)
-                        const lastItem = cells[i + 1][j]
-                        this._updateItems(lastItem, newType)
-                    }
-                }
-            }
+            });
+        });
 
-        }
-    }
-
-    _updateItems(item, type) {
-        const newItem = new Item(this.game, item.row, item.col, type)
-        newItem.position.set(item.x, item.y)
-        item.addItem(newItem)
-        this.addChild(newItem)
-    }
-
-    _randomNumbers() {
-        const index = Math.random()
-        if (index < 0.8) {
-            return 2;
-        } else {
-            return 4;
-        }
-
-    }
-
-    _newItems(check) {
-        if (check) {
-            this._generateNewItemsSet(1, this._randomNumbers())
-        }
-    }
-
-    _gameFinish() {
-        let count = 0
-        const cells = this._cells
-        for (let i = 0; i < cells.length; i++) {
-            for (let j = 0; j < cells.length; j++) {
-                if (!this._cells[i][j].isEmpty) {
-                    count++
-                    if (count === (cells.length * cells.length) && !this.moved) {
-                        console.warn('Game Over');
-                    }
-
-                }
-            }
-        }
+        return lastTween;
     }
 
 
+    _updateItems(cell, type) {
+        const newItem = new Item(this.game, type)
+        cell.addItem(newItem)
+        this.addChild(newItem);
+        newItem.position.set(cell.x, cell.y)
+    }
+
+    // _updateItems(item, type) {
+    //     const newItem = new Item(this.game, type)
+    //     newItem.position.set(item.x, item.y)
+    //     item.addItem(newItem)
+    //     this.addChild(newItem)
+    // }
+
+    // _randomNumbers() {
+    //     const index = Math.random()
+    //     if (index < 0.8) {
+    //         return 2;
+    //     } else {
+    //         return 4;
+    //     }
+    // }
+
+    // _newItems(check) {
+    //     if (check) {
+    //         this._generateNewItemsSet(1, this._randomNumbers())
+    //     }
+    // }
+
+    // _gameFinish() {
+    //     let count = 0
+    //     const cells = this._cells
+    //     for (let i = 0; i < cells.length; i++) {
+    //         for (let j = 0; j < cells.length; j++) {
+    //             if (!this._cells[i][j].isEmpty) {
+    //                 count++
+    //                 if (count === (cells.length * cells.length) && !this.moved) {
+    //                     console.warn('Game Over');
+    //                 }
+
+    //             }
+    //         }
+    //     }
+    // }
+
+    // _generateFixedItems() {
+    //     const items = this._generateNewItems(1, 4)
+    //     items.push(...this._generateNewItems(2, 2))
+    //     const emptyCells = [
+    //         this._cells[1][0],
+    //         this._cells[2][0],
+    //         this._cells[3][0],
+    //     ]
+    //     emptyCells.forEach((cell, i) => {
+    //         cell.addItem(items[i])
+    //         items[i].x = cell.x
+    //         items[i].y = cell.y
+    //         this.addChild(items[i])
+    //     });
+    // }
 }
+
+
+
+
+
+// else if (cells[i][j].item.type === cells[i - 1][j].item.type) {
+            //     this.moved = true
+            //     const newType = cells[i - 1][j].item.type * 2
+            //     const item = cells[i][j].removeItem()
+            //     this.removeChild(item)
+            //     const item_2 = cells[i - 1][j].removeItem()
+            //     const lastItem = cells[i - 1][j]
+            //     this.removeChild(item_2)
+            //     this._updateItems(lastItem, newType)
+            // }
