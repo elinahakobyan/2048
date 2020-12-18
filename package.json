@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start-sync": "npx browser-sync start . -s --files '*.html, *.css, ./src/*'",
-    "start": "webpack-dev-server --config webpack/webpack.dev.config.js",
+    "start": "webpack-dev-server --host 0.0.0.0 --config webpack/webpack.dev.config.js",
     "build": "webpack --config webpack/webpack.prod.config.js"
   },
   "devDependencies": {
