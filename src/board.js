@@ -2,6 +2,7 @@ import { Cell } from './cell';
 import { BOARD_DIMENSION, INITIAL_ITEM_COUNT } from './constants';
 import { Item } from './item';
 import { sampleSize } from './utils';
+import { getSignal } from './index';
 
 export class Board extends Phaser.Sprite {
   constructor(game) {
@@ -14,17 +15,8 @@ export class Board extends Phaser.Sprite {
     this._isMoving = false;
     this.moved = false;
     this._build();
-    window.addEventListener('keydown', this._onKeyDown.bind(this));
+    this.onRetryClick = new Phaser.Signal();
     this._generateNewItemsSet(INITIAL_ITEM_COUNT, 2);
-    this._generateNewItemsSet(INITIAL_ITEM_COUNT, 4);
-    this._generateNewItemsSet(INITIAL_ITEM_COUNT, 8);
-    this._generateNewItemsSet(INITIAL_ITEM_COUNT, 512);
-    this._generateNewItemsSet(INITIAL_ITEM_COUNT, 1024);
-    this._generateNewItemsSet(INITIAL_ITEM_COUNT, 1024);
-    this._generateNewItemsSet(INITIAL_ITEM_COUNT, 64);
-    this._generateNewItemsSet(INITIAL_ITEM_COUNT, 32);
-
-    // this._generateFixedItems()
   }
 
   getEmptyCells() {
@@ -66,12 +58,7 @@ export class Board extends Phaser.Sprite {
   _generateNewItemsSet(count, type) {
     const items = this._makeNewItems(count, type);
     const emptyCells = sampleSize(this.getEmptyCells(), count);
-    console.warn(emptyCells);
-    if (emptyCells.length === 0) {
-      if (this._gameOver()) {
-        console.warn('aa');
-      }
-    }
+
     emptyCells.forEach((cell, i) => {
       cell.addItem(items[i]);
       items[i].x = cell.x;
@@ -79,6 +66,54 @@ export class Board extends Phaser.Sprite {
       this.addChild(items[i]);
       this.game.add.tween(items[i].scale).from({ x: 0.1, y: 0.1 }, 200, Phaser.Easing.Sinusoidal.InOut, true);
     });
+    if (this.getEmptyCells().length === 0) {
+      if (this._gameOver()) {
+        this._gameOverMessege();
+        this._tryAgain();
+      }
+    }
+  }
+
+  _tryAgain() {
+    this._removeListeners();
+
+    const gr = this.game.add.graphics(255, 270);
+    gr.beginFill(0x585554);
+    gr.drawRect(-75, -25, 160, 50);
+    gr.endFill();
+    this.addChild(gr);
+
+    const style = {
+      fontSize: 25,
+      fill: '#FFFFFF',
+      align: 'center',
+    };
+    const text = this.game.add.text(210, 252, 'Try again', style);
+    text.inputEnabled = true;
+    text.events.onInputDown.add(this._onclick, this);
+    this.addChild(text);
+  }
+
+  _onclick() {
+    this.onRetryClick.dispatch(this);
+  }
+
+  _gameOverMessege() {
+    const gr = this.game.add.graphics(0, 0);
+    gr.beginFill(0xf0eae4);
+    gr.drawRect(50, 50, 426, 426);
+    gr.alpha = 0.85;
+    gr.endFill();
+    this.addChild(gr);
+
+    const style = {
+      fontSize: 45,
+      fill: '#464341',
+      align: 'center',
+    };
+    const text = this.game.add.text(147, 170, 'Game Over !', style);
+
+    this.addChild(text);
   }
 
   _makeNewItems(count, type) {
@@ -92,11 +127,24 @@ export class Board extends Phaser.Sprite {
   }
 
   _addListeners() {
+    this._bindedKeyDown = this._onKeyDown.bind(this);
+    window.addEventListener('keydown', this._bindedKeyDown);
+
     const state = this.game.state.getCurrentState();
 
     state.input.onDown.add(this._onPointerDown, this);
 
     state.input.onUp.add(this._onPointerUp, this);
+  }
+
+  _removeListeners() {
+    window.removeEventListener('keydown', this._bindedKeyDown);
+
+    const state = this.game.state.getCurrentState();
+
+    state.input.onDown.remove(this._onPointerDown, this);
+
+    state.input.onUp.remove(this._onPointerUp, this);
   }
 
   _onPointerDown(pointer) {
@@ -527,15 +575,16 @@ export class Board extends Phaser.Sprite {
     const cells = this._cells;
     for (let i = 0; i < cells.length; i++) {
       for (let j = 0; j < cells.length; j++) {
-        console.warn(cells[i][j + 1]);
         if (cells[i][j + 1]) {
           if (cells[i][j].item.type === cells[i][j + 1].item.type) {
             return false;
           }
         }
-        if (cells[[i + 1][j]]) {
-          if (cells[i][j].item.type === cells[i + 1][j].item.type) {
-            return false;
+        if (cells[i + 1]) {
+          if (cells[i + 1][j]) {
+            if (cells[i][j].item.type === cells[i + 1][j].item.type) {
+              return false;
+            }
           }
         }
       }
