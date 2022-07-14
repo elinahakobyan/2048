@@ -2,7 +2,6 @@ import { Cell } from './cell';
 import { BOARD_DIMENSION, INITIAL_ITEM_COUNT } from './constants';
 import { Item } from './item';
 import { sampleSize } from './utils';
-import { getSignal } from './index';
 
 export class Board extends Phaser.Sprite {
   constructor(game) {
@@ -68,7 +67,7 @@ export class Board extends Phaser.Sprite {
     });
     if (this.getEmptyCells().length === 0) {
       if (this._gameOver()) {
-        this._gameOverMessege();
+        this._gameOverMessage();
         this._tryAgain();
       }
     }
@@ -98,7 +97,7 @@ export class Board extends Phaser.Sprite {
     this.onRetryClick.dispatch(this);
   }
 
-  _gameOverMessege() {
+  _gameOverMessage() {
     const gr = this.game.add.graphics(0, 0);
     gr.beginFill(0xf0eae4);
     gr.drawRect(50, 50, 426, 426);
