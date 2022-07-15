@@ -1,5 +1,3 @@
-import { Item } from './item';
-
 export class Cell extends Phaser.Sprite {
   constructor(game, row, col) {
     super(game);
@@ -37,7 +35,7 @@ export class Cell extends Phaser.Sprite {
 
   _build() {
     const gr = this.game.add.graphics(0, 0);
-    gr.beginFill(0xf2f6f9);
+    gr.beginFill(0xccc0b3);
     gr.drawRect(-50, -50, 100, 100);
     gr.endFill();
     this.addChild(gr);

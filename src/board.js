@@ -3,7 +3,7 @@ import { BOARD_DIMENSION, INITIAL_ITEM_COUNT } from './constants';
 import { Item } from './item';
 import { sampleSize } from './utils';
 
-export class Board extends Phaser.Sprite {
+export class Board extends Phaser.Group {
   constructor(game) {
     super(game);
     this._cells = [];
@@ -32,6 +32,7 @@ export class Board extends Phaser.Sprite {
 
   _build() {
     this._buildCells();
+    this.position.set((window.innerWidth - this.width) / 2, this.height / 2);
     this._addListeners();
   }
 
@@ -39,13 +40,13 @@ export class Board extends Phaser.Sprite {
     const { width, height } = BOARD_DIMENSION;
     const gap = 15;
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < width; i++) {
       const row = [];
 
-      for (let j = 0; j < 4; j++) {
+      for (let j = 0; j < height; j++) {
         const cell = new Cell(this.game, i, j);
 
-        cell.position.set((j + 1) * (90 + gap), (i + 1) * (90 + gap));
+        cell.position.set((j + 0.5) * (90 + gap), (i + 0.5) * (90 + gap));
         this.addChild(cell);
         row.push(cell);
       }
@@ -76,18 +77,21 @@ export class Board extends Phaser.Sprite {
   _tryAgain() {
     this._removeListeners();
 
-    const gr = this.game.add.graphics(255, 270);
-    gr.beginFill(0x585554);
-    gr.drawRect(-75, -25, 160, 50);
-    gr.endFill();
-    this.addChild(gr);
+    // const gr = this.game.add.graphics(255, 270);
+    // gr.beginFill(0xeee4da, 0.73);
+    // gr.drawRect(-75, -25, 160, 50);
+    // gr.endFill();
+    // this.addChild(gr);
 
     const style = {
-      fontSize: 25,
-      fill: '#FFFFFF',
+      fontSize: 30,
+      fill: '#00000',
       align: 'center',
     };
-    const text = this.game.add.text(210, 252, 'Try again', style);
+
+    const text = this.game.add.text(0, 0, 'Try again', style);
+    text.position.set(140, 210);
+
     text.inputEnabled = true;
     text.events.onInputDown.add(this._onclick, this);
     this.addChild(text);
@@ -98,9 +102,11 @@ export class Board extends Phaser.Sprite {
   }
 
   _gameOverMessage() {
+    const { x, y, width, height } = this;
+
     const gr = this.game.add.graphics(0, 0);
     gr.beginFill(0xf0eae4);
-    gr.drawRect(50, 50, 426, 426);
+    gr.drawRect(0, 0, width + 73, height + 73);
     gr.alpha = 0.85;
     gr.endFill();
     this.addChild(gr);
@@ -110,8 +116,9 @@ export class Board extends Phaser.Sprite {
       fill: '#464341',
       align: 'center',
     };
-    const text = this.game.add.text(147, 170, 'Game Over !', style);
 
+    const text = this.game.add.text(0, 0, 'Game Over !', style);
+    text.position.set(gr.centerX - text.width / 2, gr.centerY - 70);
     this.addChild(text);
   }
 
@@ -555,7 +562,7 @@ export class Board extends Phaser.Sprite {
 
         if (!isEmpty) {
           this._isMoving = true;
-          lastTween = this.game.add.tween(item).to({ x, y }, 300, Phaser.Easing.Cubic.InOut, true);
+          lastTween = this.game.add.tween(item).to({ x, y }, 100, Phaser.Easing.Cubic.InOut, true);
         }
       });
     });
